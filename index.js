@@ -1,22 +1,19 @@
 import './dotenv.js';
 import Express from 'express';
-import prisma from './prisma/index.js';
+
+import { timeLog } from './utils/middlewares.js';
+import { UserRouter } from './router/router.js';
 
 const app = Express();
 const port = process.env.PORT;
-app.listen(port, () => {
-  console.log(`PORT: ${port}, connected`);
+
+app.use(timeLog); // middelware
+app.use('/user', UserRouter);
+
+app.use('/', (req, res) => {
+  res.send('<h1>Home</h1>');
 });
 
-app.get('/', async (req, res) => {
-  const user = await prisma.user.findUnique({
-    where: { userId: 'prisma' },
-    select: {
-      name: true,
-      userId: true,
-      password: true,
-    },
-  });
-
-  res.json(user);
+app.listen(port, () => {
+  console.log(`PORT: ${port}, connected`);
 });
