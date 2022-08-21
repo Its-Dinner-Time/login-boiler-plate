@@ -1,18 +1,29 @@
 import jwtUtil from '../utils/jwt.js';
 import prisma from '../prisma/index.js';
 
-export const access = (req, res) => {
-  const user = req.body;
-  const token = jwtUtil.access({ id: user.id, userId: user.userId, name: user.name });
+export const verify = async (req, res) => {
+  const accesstoken = req.headers['x-access-token'];
 
-  return res.json({ ok: true, token });
-};
+  const verified = jwtUtil.accessVerify(jwtUtil.removeBearer(accesstoken));
+  if (verified.ok) return res.json(verified);
 
-export const verify = (req, res) => {
-  const token = req.body.token;
+  //
+  // ====== access token 검증 실패
 
-  const verified = jwtUtil.accessVerify(token);
-  return res.json(verified);
+  // refresh token 검증
+  const refreshtoken = req.signedCookies[process.env.REFRESH_TOKEN_KEY];
+
+  const refreshVerified = await jwtUtil.refreshVerify(jwtUtil.removeBearer(refreshtoken));
+  if (!refreshVerified.ok) return res.json({ ok: false, err: '토큰 재발급을 위한 로그인 필요' });
+
+  //
+  // ====== refresh token 검증 성공
+
+  // access token 재 발급
+  const user = refreshVerified.user;
+  const newToken = jwtUtil.access(user);
+
+  return res.json({ ok: true, accessToken: newToken, user: jwtUtil.accessVerify(newToken) });
 };
 
 export const login = async (req, res) => {
@@ -25,13 +36,13 @@ export const login = async (req, res) => {
   });
 
   // 조회된 정보가 없는 경우
-  if (!user) return res.json({ ok: false, err: new Error('No User') });
+  if (!user) return res.json({ ok: false, err: 'No User' });
 
   // access token, refresh token 발급
-  const accessToken = jwtUtil.access({ id: user.id, userId: user.userId, name: user.name });
+  const accessToken = jwtUtil.access(user);
   const refreshToken = jwtUtil.refresh();
 
-  if (!accessToken || !refreshToken) return res.json({ ok: false, err: new Error('Token발급 오류') });
+  if (!accessToken || !refreshToken) return res.json({ ok: false, err: 'Token발급 오류' });
 
   // db의 refresh token update
   await prisma.user.update({
@@ -39,7 +50,11 @@ export const login = async (req, res) => {
     data: { refreshToken },
   });
 
-  return res.json({ ok: true, accessToken, refreshToken });
+  // refresh token httpOnly cookie에 저장
+  res.cookie(process.env.REFRESH_TOKEN_KEY, refreshToken, { httpOnly: true, signed: true });
+
+  // client에서 accessToken 저장
+  return res.json({ ok: true, accessToken, user: jwtUtil.accessVerify(accessToken) });
 };
 
 export const logout = async (req, res) => {
@@ -51,6 +66,8 @@ export const logout = async (req, res) => {
     where: { id },
     data: { refreshToken: null },
   });
+
+  res.clearCookie(process.env.REFRESH_TOKEN_KEY);
 
   return res.json({ ok: true });
 };

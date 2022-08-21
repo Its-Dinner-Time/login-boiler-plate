@@ -1,14 +1,14 @@
 import Express from 'express';
 
-import { login, access } from './UserService.js';
-import { accessTokenVerify } from '../utils/middlewares.js';
+import { login, logout, verify } from './UserService.js';
 
 const router = Express.Router();
 
 // middleware that is specific to this router
-// router.use(accessTokenVerify);
+// router.use();
 
 router.post('/login', login);
-router.post('/access', access);
+router.post('/verify', verify);
+router.post('/logout', logout);
 
 export default router;

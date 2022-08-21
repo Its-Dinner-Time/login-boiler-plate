@@ -1,23 +1,12 @@
-// jwt 인증
-
-// 1. userId, password로 DB에서 정보조회
-//  1-1. => 정보조회 실패시 실패 정보 return
-
-// 2. 조회한 user정보를 담아 jwt.sign 호출하여 access token, refresh token 생성
-// 3. access token: client에서 해당 token을 cookie(server) 또는 localStorage(client)에 저장
-//    refresh token: db에 token값 저장
-
-// 4. client router middleware에 access token을 검증하는 server router호출
-//  4-1. => TokenExpired일 경우 refresh token을 검증하는 server router호출
-//    4-1-1. => refresh token이 expired인 경우 로그인 페이지로 redirect
-
 import jwt from 'jsonwebtoken';
+import prisma from '../prisma/index.js';
 
-const tokenKey = process.env.JWT_KEY;
+const tokenKey = process.env.SECURE;
 
 const access = (user) => {
+  const payload = { id: user.id, userId: user.userId, name: user.name };
   // secret으로 sign하여 발급하고 return
-  return jwt.sign(user, tokenKey, {
+  return jwt.sign(payload, tokenKey, {
     algorithm: 'HS256', // 암호화 알고리즘
     expiresIn: '10m', // 유효기간
   });
@@ -33,7 +22,7 @@ const accessVerify = (token) => {
     result.user = decoded;
   } catch (err) {
     result.ok = false;
-    result.err = err;
+    result.err = err.message;
   }
 
   return result;
@@ -48,26 +37,34 @@ const refresh = () => {
 };
 
 // refresh token 검증
-const refreshVerify = async (clientToken, dbToken) => {
-  if (clientToken !== dbToken) {
+const refreshVerify = async (token) => {
+  const user = await prisma.user.findFirst({
+    where: { refreshToken: token },
+  });
+
+  if (!user) {
     return { ok: false, error: new Error('유효하지 않은 token') };
   }
 
   const result = {};
   try {
-    jwt.verify(dbToken, tokenKey);
+    jwt.verify(token, tokenKey);
 
     result.ok = true;
+    result.user = user;
   } catch (err) {
     result.ok = false;
-    result.err = err;
+    result.err = err.message;
   }
   return result;
 };
+
+const removeBearer = (str) => str?.replace(/^Bearer\s+/, '');
 
 export default {
   access,
   accessVerify,
   refresh,
   refreshVerify,
+  removeBearer,
 };
