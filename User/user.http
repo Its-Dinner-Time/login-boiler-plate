@@ -1,0 +1,24 @@
+POST http://localhost:5000/user/access
+Content-Type: application/json
+
+{
+  "userId" : "prisma"
+}
+###
+
+POST http://localhost:5000/user/verify
+Content-Type: application/json
+
+{
+  "token" : ".eyJpZCI6IjYzMDFlOGZlNWZiNmM3YTExODRkOWM3ZCIsInVzZXJJZCI6InByaXNtYSIsInBhc3N3b3JkIjoicHJpc21hVGVzdCIsIm5hbWUiOm51bGwsInJlZnJlc2hUb2tlbiI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpwWVhRaU9qRTJOakV3T1RVNE5EY3NJbVY0Y0NJNk1UWTJNak13TlRRME4zMC5JTVFfWkRWUnNSRTlfNWJPQXFOWWhFNnpQZzUzMmJOOGprLUFWbTVfQUZVIiwiaWF0IjoxNjYxMDk1OTcwLCJleHAiOjE2NjEwOTY1NzB9.cGuqBdk2Jqrblfp7c9BonIXdeZeUptgY4Z2sSHHXMFY"
+}
+
+###
+
+POST http://localhost:5000/user/login
+Content-Type: application/json
+
+{
+  "userId" : "prisma",
+  "password" : "prismaTest"
+}

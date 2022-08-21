@@ -1,17 +1,14 @@
 import Express from 'express';
+
+import { login, access } from './UserService.js';
+import { accessTokenVerify } from '../utils/middlewares.js';
+
 const router = Express.Router();
 
 // middleware that is specific to this router
-router.use((req, res, next) => {
-  next();
-});
+// router.use(accessTokenVerify);
 
-router.get('/', (req, res) => {
-  res.send('user home');
-});
-
-router.get('/about', (req, res) => {
-  res.send('user about');
-});
+router.post('/login', login);
+router.post('/access', access);
 
 export default router;

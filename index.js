@@ -7,9 +7,11 @@ import { UserRouter } from './router/router.js';
 const app = Express();
 const port = process.env.PORT;
 
-app.use(timeLog); // middelware
-app.use('/user', UserRouter);
+app.use(timeLog); // middleware
+app.use(Express.json()); // for parsing application/json
+app.use(Express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
+app.use('/user', UserRouter);
 app.use('/', (req, res) => {
   res.send('<h1>Home</h1>');
 });

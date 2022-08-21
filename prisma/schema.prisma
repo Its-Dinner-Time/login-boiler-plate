@@ -12,4 +12,5 @@ model User {
   userId String  @unique
   password String
   name  String?
+  refreshToken String?
 }
