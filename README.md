@@ -5,6 +5,10 @@
 - Prisma (ORM)
 - jwt 인증
 
+# Prisma
+
+- model 변경 사항 적용: npx prisma generate
+
 # jwt 인증 구현
 
 - Access Token, Refresh Token 방식
